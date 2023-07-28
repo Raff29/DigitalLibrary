@@ -7,87 +7,44 @@
 session_start(); 
 require_once("Include/db.php");
 
-// if user or employee is logged in.
-if (!isset($_SESSION["user-username"]) || !isset($_SESSION["employee-username"])) {
+function login($type){
+    global $ConnectingDB;
+    $inputUsername = $_POST["{$type}-username"];
+    $inputPassword = $_POST["{$type}-password"];
+    
+    if (empty($inputUsername) || empty($inputPassword)) {
+        return "Please add Valid Username or Password";
+    }
 
-    // checks if the user submits the button
-    if (isset($_POST["user-submit"])) {
-        $inputUsername = $_POST["user-username"];
-        $inputPassword = $_POST["user-password"];
+    $sql = "SELECT * FROM {$type}_accounts WHERE username=:usernamE";
+    $stmt = $ConnectingDB->prepare($sql);
+    $stmt->bindValue(':usernamE', $inputUsername);
+    $stmt->execute();
+    
+    while ($DataRows = $stmt->fetch()) {
+        $DBusername             = $DataRows["username"];
+        $DBpassword             = $DataRows["password"];
 
-        // checks if the input field is not empty
-        if (!empty($inputUsername) && !empty($inputPassword)) {
-
-            $accountFound = 0;
-
-            // $ConnectingDB from Include/DB.php
-            global $ConnectingDB;
-            $sql = "SELECT * FROM user_accounts WHERE username=:usernamE";
-            $stmt = $ConnectingDB->prepare($sql);
-            $stmt->bindValue(':usernamE', $inputUsername);
-            $stmt->execute();
-
-            // Loops through the database
-            while ($DataRows = $stmt->fetch()) {
-                $DBusername             = $DataRows["username"];
-                $DBpassword             = $DataRows["password"];
-
-                // Checks if the username and password verifies with the database
-                if (($inputUsername == $DBusername) && password_verify($inputPassword, $DBpassword)) {
-                    $_SESSION['user-username'] = $DBusername;
-                    echo '<script>window.open("view-catalog.php","_self")</script>';
-                    $accountFound = 1;
-                }
-            }
-
-            // checks if the account found and print on html
-            if ($accountFound == 0) {
-                echo "<span class='FieldInfoHeading'>Sorry, Please Try Again</span>";
-            }
-        // print invalid statement.
-        } else {
-            echo "<span class='FieldInfoHeading'>Please add Valid Username or Password</span>";
+        if (($inputUsername == $DBusername) && password_verify($inputPassword, $DBpassword)) {
+            $_SESSION["{$type}-username"] = $DBusername;
+            header("Location: view-catalog.php");
+            exit;
         }
     }
 
-    // checks if the employee submits the button
+    return "Sorry, Please Try Again";
+}
+
+$errorMsg = "";
+
+if (!isset($_SESSION["user-username"]) && !isset($_SESSION["employee-username"])) {
+
+    if (isset($_POST["user-submit"])) {
+        $errorMsg = login("user");
+    }
+
     if (isset($_POST["employee-submit"])) {
-        $inputUsername = $_POST["employee-username"];
-        $inputPassword = $_POST["employee-password"];
-
-        // checks if the input field is not empty
-        if (!empty($inputUsername) && !empty($inputPassword)) {
-
-            $accountFound = 0;
-
-            // $ConnectingDB from Include/DB.php
-            global $ConnectingDB;
-            $sql = "SELECT * FROM employee_accounts WHERE username=:usernamE";
-            $stmt = $ConnectingDB->prepare($sql);
-            $stmt->bindValue(':usernamE', $inputUsername);
-            $stmt->execute();
-
-            // Loops through the database
-            while ($DataRows = $stmt->fetch()) {
-                $DBusername             = $DataRows["username"];
-                $DBpassword             = $DataRows["password"];
-
-                // Checks if the username and password verifies with the database
-                if (($inputUsername == $DBusername) && password_verify($inputPassword, $DBpassword)) {
-                    $_SESSION['employee-username'] = $DBusername;
-                    echo '<script>window.open("view-catalog.php","_self")</script>';
-                    $accountFound = 1;
-                }
-            }
-
-            // checks if the account found and print on html
-            if ($accountFound == 0) {
-                echo "<span class='FieldInfoHeading'>Sorry, Please Try Again</span>";
-            }
-        // print invalid statement.
-        } else {
-            echo "<span class='FieldInfoHeading'>Please add Valid Username or Password</span>";
-        }
+        $errorMsg = login("employee");
     }
 
 ?>
