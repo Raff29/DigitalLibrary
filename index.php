@@ -3,8 +3,7 @@
 require_once __DIR__ . "/Include/db.php";
 
 session_start();
-
-function createUser($name, $username, $password, $email, $tableName)
+function createUser($name, $username, $password, $tableName)
 {
     global $ConnectingDB;
 
@@ -18,12 +17,11 @@ function createUser($name, $username, $password, $email, $tableName)
     }
 
     if (strtolower($DBusername) != strtolower($username)) {
-        $sql = "INSERT INTO $tableName(name, username, password, email) VALUES(:namE, :usernamE, :passworD, :emaiL)";
+        $sql = "INSERT INTO $tableName(name, username, password) VALUES(:namE, :usernamE, :passworD)";
         $stmt = $ConnectingDB->prepare($sql);
         $stmt->bindValue(':namE', $name);
         $stmt->bindValue(':usernamE', $username);
         $stmt->bindValue(':passworD', password_hash($password, PASSWORD_ARGON2ID));
-        $stmt->bindValue(':emaiL', $email);
 
         $Execute = $stmt->execute();
         if ($Execute) {
@@ -42,7 +40,6 @@ if (isset($_POST["employee-submit"])) {
     $_SESSION['name_error'] = '';
     $_SESSION['username_error'] = '';
     $_SESSION['password_error'] = '';
-    $_SESSION['email_error'] = '';
 
     if (empty($_POST["employee-name"])) {
         $_SESSION['name_error'] = 'Name field is required';
@@ -66,17 +63,10 @@ if (isset($_POST["employee-submit"])) {
         $password = $_POST["employee-password"];
     }
 
-    if (empty($_POST["employee-email"])) {
-        $_SESSION['email_error'] = 'Email field is required';
-    } else if (!filter_var($_POST["employee-email"], FILTER_VALIDATE_EMAIL)) {
-        $_SESSION['email_error'] = 'Invalid email format';
-    } else {
-        $email = $_POST["employee-email"];
-    }
 
     // If no error messages were set, create the user
     if (empty($_SESSION['name_error']) && empty($_SESSION['username_error']) && empty($_SESSION['password_error']) && empty($_SESSION['email_error'])) {
-        createUser($name, $username, $password, $email, 'employee_accounts');
+        createUser($name, $username, $password, 'employee_accounts');
     }
 }
 
@@ -248,16 +238,6 @@ if (isset($_POST["user-submit"])) {
                     <span>Name</span>
                     <input type="text" placeholder="Ex. Harry Potter" name="employee-name" class="inp" />
 
-                </div>
-                <div class="input-group">
-                    <span>Email</span>
-                    <input type="email" placeholder="Ex. hpotter@hogwarts.com" name="employee-email" class="inp" />
-                    <?php
-                    if (isset($_SESSION['email_error'])) {
-                        echo "<div class='error'>{$_SESSION['email_error']}</div>";
-                        unset($_SESSION['email_error']);
-                    }
-                    ?>
                 </div>
                 <div class="input-group">
                     <span>Username</span>
