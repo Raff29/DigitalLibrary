@@ -90,22 +90,22 @@ if (isset($_SESSION["employee-username"]) || isset($_SESSION["user-username"])) 
                 background-color: #007bff;
                 color: #fff;
                 cursor: pointer;
+                margin-left: 15px;
             }
 
-            .sort-form label,
-            .sort-form select {
-                margin-right: 10px;
+            .sort-form input[type="submit"] {
+                margin-right: 15px;
             }
 
             .sort-form label {
                 font-weight: bold;
             }
 
-            .search-form input[type="submit"]:hover,
             .sort-form input[type="submit"]:hover {
                 background-color: #0056b3;
             }
         </style>
+
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous" />
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous" async>
@@ -259,11 +259,9 @@ if (isset($_SESSION["employee-username"]) || isset($_SESSION["user-username"])) 
 
                     global $ConnectingDB;
 
-                    $sort_asc_dec = "SORT_ASC";
-                    $sortType = "all";
+                    $sort_asc_dec = SORT_ASC;
                     if (isset($_POST["sort-submit"])) {
-                        $sort_asc_dec = $_POST["sort-name"];
-                        $sortType = $_POST["sort-type"];
+                        $sort_asc_dec = ($_POST["sort-name"] === 'SORT_DESC') ? SORT_DESC : SORT_ASC;
                     }
 
 
@@ -281,15 +279,24 @@ if (isset($_SESSION["employee-username"]) || isset($_SESSION["user-username"])) 
                         }
                         $Type               = $DataRows["type"];
 
-                        array_push($listOfList, array('id' => $Id, 'name' => $Name, 'author_dev_artist' => $Author_dev_artist, 'type' => $Type, 'isbn' => $ISBN, 'available' => $Available));
+                        array_push($listOfList, array(
+                            'id' => $Id,
+                            'name' => $Name,
+                            'author_dev_artist' => $Author_dev_artist,
+                            'type' => $Type,
+                            'isbn' => $ISBN,
+                            'available' => $Available
+                        ));
                     }
 
                     $allNames = array_column($listOfList, 'name');
-                    if ($sort_asc_dec == "SORT_DESC") {
+                    if ($sort_asc_dec == SORT_DESC) {
                         array_multisort($allNames, SORT_DESC, $listOfList);
                     } else {
                         array_multisort($allNames, SORT_ASC, $listOfList);
                     }
+
+                    $sortType = isset($_POST['sort-type']) ? $_POST['sort-type'] : 'all';
 
 
                     foreach ($listOfList as $value) {
@@ -300,8 +307,7 @@ if (isset($_SESSION["employee-username"]) || isset($_SESSION["user-username"])) 
                         $ISBN = $value['isbn'];
                         $Available = $value['available'];
 
-                        if ($Type == $sortType || $sortType == "all") {
-
+                        if ($Type == $sortType || $sortType == 'all' || ($sortType == 'game' && $Type != 'book')) {
                     ?>
                             <tr>
                                 <td><?php echo $Name; ?></td>
