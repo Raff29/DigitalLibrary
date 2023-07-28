@@ -21,7 +21,7 @@ if (isset($_SESSION["employee-username"])) {
 
   function renderType($type)
   {
-    return ucfirst($type); // Capitalize the type for display
+    return ucfirst($type); 
   }
 ?>
 
@@ -63,6 +63,10 @@ if (isset($_SESSION["employee-username"])) {
         background-color: #f2f2f2;
       }
 
+      tr {
+        text-align: center;
+      }
+
       tr:hover {
         background-color: #f2f2f2;
       }
@@ -97,21 +101,34 @@ if (isset($_SESSION["employee-username"])) {
     </nav>
 
     <div class="container">
-      <h3 align="center">View from Database</h3>
-      <?php
-      // Query the database and fetch items
-      global $ConnectingDB;
-      $sql = "SELECT * FROM catalog";
-      $stmt = $ConnectingDB->query($sql);
+    <h3 align="center">View from Database</h3>
+    <?php
+    global $ConnectingDB;
+    // Check if the ID is provided in the query string
+    if (isset($_GET['id'])) {
+      $itemId = $_GET['id'];
+      $sql = "SELECT * FROM catalog WHERE id = :itemId";
+      $stmt = $ConnectingDB->prepare($sql);
+      $stmt->bindValue(':itemId', $itemId);
+      $stmt->execute();
 
       if ($stmt->rowCount() === 0) {
-        echo "<p>No items found in the catalog.</p>";
+        echo "<p>No item found with the provided ID.</p>";
       } else {
-      ?>
-        <table width="1000" border="5" align="center">
+        $DataRows = $stmt->fetch();
+        $Id = $DataRows["id"];
+        $Name = $DataRows["name"];
+        $Author_dev_artist = $DataRows["author_dev_artist"];
+        $Type = $DataRows["type"];
+        $ISBN = $DataRows["isbn"];
+        $Available = renderAvailable($DataRows["available"]);
+        $ImageLink = $DataRows["image_link"];
+        $ItemLink = $DataRows["item_link"];
+    ?>
+        <table width="" border="5" align="center">
           <tr>
             <th>Name</th>
-            <th>Author | Dev | Artist</th>
+            <th>Author</th>
             <th>Type</th>
             <th>ISBN</th>
             <th>Item Link</th>
@@ -122,42 +139,30 @@ if (isset($_SESSION["employee-username"])) {
               <th>Delete</th>
             <?php } ?>
           </tr>
-
-          <?php
-          while ($DataRows = $stmt->fetch()) {
-            $Id = $DataRows["id"];
-            $Name = $DataRows["name"];
-            $Author_dev_artist = $DataRows["author_dev_artist"];
-            $Type = $DataRows["type"];
-            $ISBN = $DataRows["isbn"];
-            $Available = renderAvailable($DataRows["available"]);
-            $ImageLink = $DataRows["image_link"];
-            $ItemLink = $DataRows["item_link"];
-          ?>
-
-            <tr>
-              <td><?php echo $Name; ?></td>
-              <td><?php echo $Author_dev_artist; ?></td>
-              <td><?php echo renderType($Type); ?></td>
-              <td><?php echo $ISBN; ?></td>
-              <td><?php echo renderLink($ItemLink); ?></td>
-              <td><?php echo $Available; ?></td>
-              <td><?php echo renderImage($ImageLink); ?></td>
-              <?php if (isset($_SESSION["employee-username"])) { ?>
-                <td><a href="edit.php?id=<?php echo $Id; ?>">Edit</a></td>
-                <td><a href="delete.php?id=<?php echo $Id; ?>">Delete</a></td>
-              <?php } ?>
-            </tr>
-
-          <?php } ?>
+          <tr>
+            <td><?php echo $Name; ?></td>
+            <td><?php echo $Author_dev_artist; ?></td>
+            <td><?php echo renderType($Type); ?></td>
+            <td><?php echo $ISBN; ?></td>
+            <td><?php echo renderLink($ItemLink); ?></td>
+            <td><?php echo $Available; ?></td>
+            <td><?php echo renderImage($ImageLink); ?></td>
+            <?php if (isset($_SESSION["employee-username"])) { ?>
+              <td><a href="edit.php?id=<?php echo $Id; ?>">Edit</a></td>
+              <td><a href="delete.php?id=<?php echo $Id; ?>">Delete</a></td>
+            <?php } ?>
+          </tr>
         </table>
-      <?php
+    <?php
       }
-      ?>
+    } else {
+      echo "<p>No item ID provided. Please provide an ID to view a specific item.</p>";
+    }
+    ?>
+  </div>
+</body>
 
-  </body>
-
-  </html>
+</html>
 
 <?php
 } else {
